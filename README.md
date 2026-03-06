@@ -32,3 +32,13 @@ Coming soon.
 - Run-now buttons
 - Last result / success / duration sensors
 - Stale binary sensors
+
+## Development
+
+### Local setup
+Create a Python virtual environment and install development dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements_dev.txt

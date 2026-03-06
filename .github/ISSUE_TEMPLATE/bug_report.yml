@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a problem with Backup Monitor
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please include diagnostics if possible.
+
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      placeholder: "e.g. 1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "e.g. 2026.3.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options:
+        - Backrest
+        - Duplicati
+        - Both
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      render: shell
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics summary
+      description: Paste sanitized diagnostics details if available
