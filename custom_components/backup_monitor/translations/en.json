@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Backup Monitor",
+        "description": "Choose a provider",
+        "data": {
+          "provider": "Provider"
+        }
+      },
+      "backrest": {
+        "title": "Backrest",
+        "data": {
+          "base_url": "Base URL",
+          "username": "Username",
+          "password": "Password",
+          "verify_ssl": "Verify SSL certificate"
+        }
+      },
+      "duplicati": {
+        "title": "Duplicati",
+        "data": {
+          "base_url": "Base URL",
+          "password": "Password",
+          "verify_ssl": "Verify SSL certificate"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect or authenticate."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "poll_interval": "Polling interval (seconds)",
+          "stale_hours": "Stale threshold (hours)",
+          "verify_ssl": "Verify SSL certificate"
+        }
+      }
+    }
+  }
+}
