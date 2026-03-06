@@ -3,13 +3,19 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySensorDeviceClass
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_STALE_HOURS, DEFAULT_STALE_HOURS, DOMAIN, PROVIDER_BACKREST, PROVIDER_DUPLICATI
+from .const import (
+    CONF_STALE_HOURS,
+    DEFAULT_STALE_HOURS,
+    DOMAIN,
+    PROVIDER_BACKREST,
+    PROVIDER_DUPLICATI,
+)
 from .entity import BackupMonitorEntity
 
 
@@ -126,29 +132,51 @@ def _jobs_for_provider(data: dict[str, Any] | None, provider: str) -> dict[str, 
     return data.get("jobs") or {}
 
 
+def _completed_jobs_for_provider(
+    data: dict[str, Any] | None,
+    provider: str,
+) -> dict[str, dict[str, Any]]:
+    jobs = _jobs_for_provider(data, provider)
+    completed: dict[str, dict[str, Any]] = {}
+
+    for job_id, job in jobs.items():
+        if not isinstance(job, dict):
+            continue
+        if job.get("last_end"):
+            completed[job_id] = job
+
+    return completed
+
+
 def _provider_is_stale(
     data: dict[str, Any] | None,
     provider: str,
     stale_hours: int,
 ) -> bool:
-    jobs = _jobs_for_provider(data, provider)
-    if not jobs:
+    completed_jobs = _completed_jobs_for_provider(data, provider)
+    if not completed_jobs:
         return True
 
-    now = dt_util.utcnow()
-    for job in jobs.values():
-        if not isinstance(job, dict):
-            return True
+    latest_completed: datetime | None = None
+
+    for job in completed_jobs.values():
         value = job.get("last_end")
         if not value:
-            return True
+            continue
+
         try:
             last = datetime.fromisoformat(value)
         except Exception:
-            return True
-        if (now - last) > timedelta(hours=stale_hours):
-            return True
-    return False
+            continue
+
+        if latest_completed is None or last > latest_completed:
+            latest_completed = last
+
+    if latest_completed is None:
+        return True
+
+    now = dt_util.utcnow()
+    return (now - latest_completed) > timedelta(hours=stale_hours)
 
 
 def _provider_is_healthy(
@@ -156,15 +184,16 @@ def _provider_is_healthy(
     provider: str,
     stale_hours: int,
 ) -> bool:
-    jobs = _jobs_for_provider(data, provider)
-    if not jobs:
+    completed_jobs = _completed_jobs_for_provider(data, provider)
+    if not completed_jobs:
         return False
 
     if _provider_is_stale(data, provider, stale_hours):
         return False
 
-    for job in jobs.values():
-        if isinstance(job, dict) and job.get("last_result") == "error":
+    for job in completed_jobs.values():
+        result = str(job.get("last_result") or "").strip().lower()
+        if result in {"error", "failed", "status_error", "status_failed"}:
             return False
 
     return True
