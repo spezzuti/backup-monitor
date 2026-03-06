@@ -17,6 +17,7 @@ Home Assistant should talk to internal hostnames such as:
 - `https://duplicati.lan`
 
 Do not place Cloudflare or other CDN/WAF layers in front of the API endpoints used by Home Assistant.
+Self-signed/internal TLS may require Verify TLS Off
 
 ## Installation
 ### Manual
