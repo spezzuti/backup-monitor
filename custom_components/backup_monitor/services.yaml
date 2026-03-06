@@ -1,0 +1,27 @@
+run_backup:
+  name: Run backup
+  description: Run a backup job or plan for a configured provider.
+  fields:
+    entry_id:
+      name: Config entry ID
+      description: The Backup Monitor config entry ID.
+      required: true
+      selector:
+        text:
+    job_id:
+      name: Job or plan ID
+      description: The provider-specific backup job ID or plan ID.
+      required: true
+      selector:
+        text:
+
+refresh_provider:
+  name: Refresh provider
+  description: Refresh data for a configured provider.
+  fields:
+    entry_id:
+      name: Config entry ID
+      description: The Backup Monitor config entry ID.
+      required: true
+      selector:
+        text:
