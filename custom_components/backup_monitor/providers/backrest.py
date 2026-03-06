@@ -41,22 +41,55 @@ class BackrestClient:
             ops = data["operations"]
 
         plans: dict[str, BackrestPlanState] = {}
+
+        latest_any: dict[str, BackrestPlanState] = {}
+        latest_terminal: dict[str, BackrestPlanState] = {}
+        latest_success: dict[str, BackrestPlanState] = {}
+
         for op in ops:
             if not isinstance(op, dict):
                 continue
+
             pid = op.get("planId") or op.get("plan_id")
             if not pid:
                 continue
+
             plan_id = str(pid)
             st = _parse_operation(plan_id, op)
-            prev = plans.get(plan_id)
-            if prev is None:
-                plans[plan_id] = st
-                continue
-            prev_ts = prev.last_end or prev.last_start
             st_ts = st.last_end or st.last_start
-            if st_ts and (prev_ts is None or st_ts > prev_ts):
-                plans[plan_id] = st
+
+            prev_any = latest_any.get(plan_id)
+            prev_any_ts = (prev_any.last_end or prev_any.last_start) if prev_any else None
+            if prev_any is None or (st_ts and (prev_any_ts is None or st_ts > prev_any_ts)):
+                latest_any[plan_id] = st
+
+            if not _is_pending_status(st.last_status):
+                prev_terminal = latest_terminal.get(plan_id)
+                prev_terminal_ts = (prev_terminal.last_end or prev_terminal.last_start) if prev_terminal else None
+                if prev_terminal is None or (st_ts and (prev_terminal_ts is None or st_ts > prev_terminal_ts)):
+                    latest_terminal[plan_id] = st
+
+            if _is_success_status(st.last_status):
+                prev_success = latest_success.get(plan_id)
+                prev_success_ts = (prev_success.last_end or prev_success.last_start) if prev_success else None
+                if prev_success is None or (st_ts and (prev_success_ts is None or st_ts > prev_success_ts)):
+                    latest_success[plan_id] = st
+
+        for plan_id, st_any in latest_any.items():
+            chosen = latest_terminal.get(plan_id, st_any)
+            success_state = latest_success.get(plan_id)
+
+            if success_state is not None:
+                chosen = BackrestPlanState(
+                    plan_id=chosen.plan_id,
+                    last_status=chosen.last_status,
+                    last_end=success_state.last_end,
+                    last_start=success_state.last_start,
+                    last_message=chosen.last_message,
+                    duration_s=success_state.duration_s,
+                )
+
+            plans[plan_id] = chosen
 
         return {"plans": {pid: _as_dict(s) for pid, s in plans.items()}, "raw": {"operation_count": len(ops)}}
 
@@ -89,6 +122,35 @@ def _parse_ms_epoch(v: Any) -> datetime | None:
     except Exception:
         return None
 
+def _normalize_status(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value).strip().lower()
+
+
+def _is_pending_status(value: Any) -> bool:
+    status = _normalize_status(value)
+    return status in {
+        "status_pending",
+        "pending",
+        "queued",
+        "status_queued",
+        "running",
+        "status_running",
+        "in_progress",
+        "status_in_progress",
+    }
+
+
+def _is_success_status(value: Any) -> bool:
+    status = _normalize_status(value)
+    return status in {
+        "success",
+        "status_success",
+        "completed",
+        "status_completed",
+        "ok",
+    }
 
 def _parse_operation(plan_id: str, op: dict[str, Any]) -> BackrestPlanState:
     status = op.get("status") or op.get("result") or op.get("state")
