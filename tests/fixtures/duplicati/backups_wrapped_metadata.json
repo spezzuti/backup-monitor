@@ -1,0 +1,16 @@
+[
+  {
+    "Backup": {
+      "ID": "1",
+      "Name": "docker-config-backup",
+      "Metadata": {
+        "LastBackupDate": "2026-03-05T12:00:00Z",
+        "LastBackupStarted": "2026-03-05T11:58:00Z",
+        "LastBackupFinished": "2026-03-05T12:00:00Z",
+        "LastBackupDuration": "00:02:00",
+        "LastErrorDate": null,
+        "LastErrorMessage": null
+      }
+    }
+  }
+]

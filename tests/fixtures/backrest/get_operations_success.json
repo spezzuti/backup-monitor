@@ -1,0 +1,11 @@
+{
+  "operations": [
+    {
+      "planId": "truenas-dockerconfigs",
+      "status": "success",
+      "displayMessage": "Backup completed",
+      "unixTimeStartMs": 1735000000000,
+      "unixTimeEndMs": 1735000300000
+    }
+  ]
+}
