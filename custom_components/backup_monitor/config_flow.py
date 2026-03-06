@@ -47,6 +47,7 @@ class BackupMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._provider: str | None = None
+        self._reauth_entry = None
 
     async def async_step_user(self, user_input=None):
         if user_input is None:
@@ -56,6 +57,113 @@ class BackupMonitorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self._provider == PROVIDER_BACKREST:
             return await self.async_step_backrest()
         return await self.async_step_duplicati()
+
+    async def async_step_reauth(self, entry_data):
+        """Handle reauthentication flow start."""
+        self._reauth_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        if self._reauth_entry is None:
+            return self.async_abort(reason="unknown")
+
+        self._provider = self._reauth_entry.data[CONF_PROVIDER]
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input=None):
+        """Handle reauthentication confirmation."""
+        if self._reauth_entry is None:
+            return self.async_abort(reason="unknown")
+
+        errors = {}
+
+        provider = self._reauth_entry.data[CONF_PROVIDER]
+
+        if provider == PROVIDER_BACKREST:
+            schema = vol.Schema(
+                {
+                    vol.Required(
+                        CONF_USERNAME,
+                        default=self._reauth_entry.data.get(CONF_USERNAME, ""),
+                    ): str,
+                    vol.Required(CONF_PASSWORD): str,
+                    vol.Optional(
+                        CONF_VERIFY_SSL,
+                        default=self._reauth_entry.options.get(
+                            CONF_VERIFY_SSL,
+                            self._reauth_entry.data.get(CONF_VERIFY_SSL, True),
+                        ),
+                    ): bool,
+                }
+            )
+
+            if user_input is not None:
+                new_data = {
+                    **self._reauth_entry.data,
+                    CONF_USERNAME: user_input[CONF_USERNAME],
+                    CONF_PASSWORD: user_input[CONF_PASSWORD],
+                    CONF_VERIFY_SSL: user_input[CONF_VERIFY_SSL],
+                }
+                client = BackrestClient(self.hass, _fake_entry(provider, new_data))
+                try:
+                    await client.async_validate()
+                except Exception as e:  # noqa: BLE001
+                    _LOGGER.exception("Backrest reauth failed: %s", e)
+                    errors["base"] = "cannot_connect"
+                else:
+                    self.hass.config_entries.async_update_entry(
+                        self._reauth_entry,
+                        data=new_data,
+                    )
+                    await self.hass.config_entries.async_reload(self._reauth_entry.entry_id)
+                    return self.async_abort(reason="reauth_successful")
+
+            return self.async_show_form(
+                step_id="reauth_confirm",
+                data_schema=schema,
+                errors=errors,
+            )
+
+        if provider == PROVIDER_DUPLICATI:
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_PASSWORD): str,
+                    vol.Optional(
+                        CONF_VERIFY_SSL,
+                        default=self._reauth_entry.options.get(
+                            CONF_VERIFY_SSL,
+                            self._reauth_entry.data.get(CONF_VERIFY_SSL, True),
+                        ),
+                    ): bool,
+                }
+            )
+
+            if user_input is not None:
+                new_data = {
+                    **self._reauth_entry.data,
+                    CONF_PASSWORD: user_input[CONF_PASSWORD],
+                    CONF_VERIFY_SSL: user_input[CONF_VERIFY_SSL],
+                }
+                client = DuplicatiClient(self.hass, _fake_entry(provider, new_data))
+                try:
+                    await client.async_validate()
+                except Exception as e:  # noqa: BLE001
+                    _LOGGER.exception("Duplicati reauth failed: %s", e)
+                    errors["base"] = "cannot_connect"
+                else:
+                    self.hass.config_entries.async_update_entry(
+                        self._reauth_entry,
+                        data=new_data,
+                    )
+                    await self.hass.config_entries.async_reload(self._reauth_entry.entry_id)
+                    return self.async_abort(reason="reauth_successful")
+
+            return self.async_show_form(
+                step_id="reauth_confirm",
+                data_schema=schema,
+                errors=errors,
+            )
+
+        return self.async_abort(reason="unknown")
 
     async def async_step_backrest(self, user_input=None):
         errors = {}

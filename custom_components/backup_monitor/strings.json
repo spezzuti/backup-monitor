@@ -25,6 +25,15 @@
           "password": "Password",
           "verify_ssl": "Verify SSL certificate"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Backup Monitor",
+        "description": "Update the credentials for this provider.",
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "verify_ssl": "Verify SSL certificate"
+        }
       }
     },
     "error": {
