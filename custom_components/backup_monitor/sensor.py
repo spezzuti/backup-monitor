@@ -19,7 +19,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     created: set[str] = set()
 
-    entities: list[SensorEntity] = [BackupCountSensor(coordinator, provider)]
+    entities: list[SensorEntity] = [
+        BackupCountSensor(coordinator, provider),
+        ProviderFailedJobsSensor(coordinator, provider),
+        ProviderSuccessfulJobsSensor(coordinator, provider),
+        ProviderLastSuccessSensor(coordinator, provider),
+        ProviderLastResultSensor(coordinator, provider),
+    ]
     created.add("_count")
 
     def add_for_ids(ids: list[str], name_map: dict[str, str] | None = None) -> None:
@@ -111,8 +117,127 @@ class BackupLastDurationSensor(BackupMonitorEntity, SensorEntity):
         return st.get("duration_s")
 
 
+class ProviderJobCountSensor(BackupMonitorEntity, SensorEntity):
+    _attr_icon = "mdi:counter"
+
+    def __init__(self, coordinator, provider: str) -> None:
+        super().__init__(coordinator, provider, "_provider_job_count", "Job count")
+
+    @property
+    def native_value(self):
+        jobs = _jobs_for_provider(self.coordinator.data, self._provider)
+        return len(jobs)
+
+
+class ProviderFailedJobsSensor(BackupMonitorEntity, SensorEntity):
+    _attr_icon = "mdi:alert-circle-outline"
+
+    def __init__(self, coordinator, provider: str) -> None:
+        super().__init__(coordinator, provider, "_provider_failed_jobs", "Failed jobs")
+
+    @property
+    def native_value(self):
+        jobs = _jobs_for_provider(self.coordinator.data, self._provider)
+        return len(_failed_jobs(jobs))
+
+
+class ProviderSuccessfulJobsSensor(BackupMonitorEntity, SensorEntity):
+    _attr_icon = "mdi:check-circle-outline"
+
+    def __init__(self, coordinator, provider: str) -> None:
+        super().__init__(coordinator, provider, "_provider_successful_jobs", "Successful jobs")
+
+    @property
+    def native_value(self):
+        jobs = _jobs_for_provider(self.coordinator.data, self._provider)
+        return len(_successful_jobs(jobs))
+
+
+class ProviderLastSuccessSensor(BackupMonitorEntity, SensorEntity):
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator, provider: str) -> None:
+        super().__init__(coordinator, provider, "_provider_last_success", "Last success")
+
+    @property
+    def native_value(self):
+        jobs = _jobs_for_provider(self.coordinator.data, self._provider)
+        value = _latest_success_iso(jobs)
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value)
+        except Exception:
+            return None
+
+
+class ProviderLastResultSensor(BackupMonitorEntity, SensorEntity):
+    _attr_icon = "mdi:clipboard-check-outline"
+
+    def __init__(self, coordinator, provider: str) -> None:
+        super().__init__(coordinator, provider, "_provider_last_result", "Last result")
+
+    @property
+    def native_value(self):
+        jobs = _jobs_for_provider(self.coordinator.data, self._provider)
+        return _provider_result(jobs)
+
+
 def _get_state(data: dict[str, Any] | None, provider: str, job_id: str) -> dict[str, Any]:
     data = data or {}
     if provider == PROVIDER_BACKREST:
         return (data.get("plans") or {}).get(job_id, {})
     return (data.get("jobs") or {}).get(job_id, {})
+
+
+def _jobs_for_provider(data: dict[str, Any] | None, provider: str) -> dict[str, Any]:
+    data = data or {}
+    if provider == PROVIDER_BACKREST:
+        return data.get("plans") or {}
+    return data.get("jobs") or {}
+
+
+def _successful_jobs(jobs: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        job for job in jobs.values()
+        if isinstance(job, dict) and job.get("last_result") == "success"
+    ]
+
+
+def _failed_jobs(jobs: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        job for job in jobs.values()
+        if isinstance(job, dict) and job.get("last_result") == "error"
+    ]
+
+
+def _latest_success_iso(jobs: dict[str, Any]) -> str | None:
+    latest: str | None = None
+    for job in jobs.values():
+        if not isinstance(job, dict):
+            continue
+        value = job.get("last_end")
+        if not value:
+            continue
+        if latest is None or str(value) > latest:
+            latest = str(value)
+    return latest
+
+
+def _provider_result(jobs: dict[str, Any]) -> str:
+    if not jobs:
+        return "unknown"
+
+    if any(
+        isinstance(job, dict) and job.get("last_result") == "error"
+        for job in jobs.values()
+    ):
+        return "error"
+
+    if any(
+        isinstance(job, dict) and not job.get("last_end")
+        for job in jobs.values()
+    ):
+        return "unknown"
+
+    return "success"

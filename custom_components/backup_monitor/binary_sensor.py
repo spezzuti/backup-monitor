@@ -21,6 +21,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     created: set[str] = set()
 
+    entities: list[BinarySensorEntity] = [
+        ProviderHealthyBinarySensor(coordinator, provider, stale_hours),
+        ProviderStaleBinarySensor(coordinator, provider, stale_hours),
+    ]
+
+    async_add_entities(entities)
+
     def add_for_ids(ids: list[str], name_map: dict[str, str] | None = None) -> None:
         new_ents: list[BinarySensorEntity] = []
         for _id in ids:
@@ -72,8 +79,92 @@ class BackupStaleBinarySensor(BackupMonitorEntity, BinarySensorEntity):
         return (now - last) > timedelta(hours=self._stale_hours)
 
 
+class ProviderHealthyBinarySensor(BackupMonitorEntity, BinarySensorEntity):
+    _attr_icon = "mdi:shield-check-outline"
+
+    def __init__(self, coordinator, provider: str, stale_hours: int) -> None:
+        super().__init__(coordinator, provider, "_provider_healthy", "Healthy")
+        self._stale_hours = stale_hours
+
+    @property
+    def is_on(self):
+        return _provider_is_healthy(
+            self.coordinator.data,
+            self._provider,
+            self._stale_hours,
+        )
+
+
+class ProviderStaleBinarySensor(BackupMonitorEntity, BinarySensorEntity):
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_icon = "mdi:clock-alert-outline"
+
+    def __init__(self, coordinator, provider: str, stale_hours: int) -> None:
+        super().__init__(coordinator, provider, "_provider_stale", "Stale")
+        self._stale_hours = stale_hours
+
+    @property
+    def is_on(self):
+        return _provider_is_stale(
+            self.coordinator.data,
+            self._provider,
+            self._stale_hours,
+        )
+
+
 def _get_state(data: dict[str, Any] | None, provider: str, job_id: str) -> dict[str, Any]:
     data = data or {}
     if provider == PROVIDER_BACKREST:
         return (data.get("plans") or {}).get(job_id, {})
     return (data.get("jobs") or {}).get(job_id, {})
+
+
+def _jobs_for_provider(data: dict[str, Any] | None, provider: str) -> dict[str, Any]:
+    data = data or {}
+    if provider == PROVIDER_BACKREST:
+        return data.get("plans") or {}
+    return data.get("jobs") or {}
+
+
+def _provider_is_stale(
+    data: dict[str, Any] | None,
+    provider: str,
+    stale_hours: int,
+) -> bool:
+    jobs = _jobs_for_provider(data, provider)
+    if not jobs:
+        return True
+
+    now = dt_util.utcnow()
+    for job in jobs.values():
+        if not isinstance(job, dict):
+            return True
+        value = job.get("last_end")
+        if not value:
+            return True
+        try:
+            last = datetime.fromisoformat(value)
+        except Exception:
+            return True
+        if (now - last) > timedelta(hours=stale_hours):
+            return True
+    return False
+
+
+def _provider_is_healthy(
+    data: dict[str, Any] | None,
+    provider: str,
+    stale_hours: int,
+) -> bool:
+    jobs = _jobs_for_provider(data, provider)
+    if not jobs:
+        return False
+
+    if _provider_is_stale(data, provider, stale_hours):
+        return False
+
+    for job in jobs.values():
+        if isinstance(job, dict) and job.get("last_result") == "error":
+            return False
+
+    return True
