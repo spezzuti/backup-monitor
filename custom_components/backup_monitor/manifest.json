@@ -7,5 +7,6 @@
   "integration_type": "service",
   "iot_class": "local_polling",
   "requirements": [],
-  "version": "1.0.2"
+  "codeowners": ["spezzuti"],
+  "version": "1.0.3"
 }
