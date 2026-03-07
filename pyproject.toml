@@ -8,4 +8,4 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "ASYNC", "UP"]
-ignore = []
+ignore = ["E501","ASYNC109"]
