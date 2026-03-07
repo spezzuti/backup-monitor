@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" width="200">
+</p>
+
 # Backup Monitor
 
 Backup Monitor is a Home Assistant custom integration for monitoring backup jobs from:
