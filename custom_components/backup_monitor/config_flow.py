@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-import voluptuous as vol
 
+import voluptuous as vol
 from homeassistant import config_entries
 
 from .const import (
@@ -16,9 +16,9 @@ from .const import (
     PROVIDER_BACKREST,
     PROVIDER_DUPLICATI,
 )
+from .options_flow import BackupMonitorOptionsFlow
 from .providers.backrest import BackrestClient
 from .providers.duplicati import DuplicatiClient
-from .options_flow import BackupMonitorOptionsFlow
 
 _LOGGER = logging.getLogger(__name__)
 

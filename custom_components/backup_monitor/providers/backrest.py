@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from aiohttp import BasicAuth
@@ -118,7 +118,7 @@ def _parse_ms_epoch(v: Any) -> datetime | None:
         n = float(v)
         if n > 1e12:
             n /= 1000.0
-        return datetime.fromtimestamp(n, tz=timezone.utc)
+        return datetime.fromtimestamp(n, tz=UTC)
     except Exception:
         return None
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import logging
+from datetime import UTC, datetime
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -177,7 +177,7 @@ def _parse_time(v: Any) -> datetime | None:
         n = float(v)
         if n > 1e12:
             n /= 1000.0
-        return datetime.fromtimestamp(n, tz=timezone.utc)
+        return datetime.fromtimestamp(n, tz=UTC)
     except Exception:
         return None
 

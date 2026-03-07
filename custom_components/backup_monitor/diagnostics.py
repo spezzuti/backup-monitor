@@ -8,7 +8,6 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN
 
-
 REDACT_KEYS = {
     CONF_PASSWORD,
     CONF_USERNAME,

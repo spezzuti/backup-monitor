@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTR_PROVIDER, ATTR_JOB_ID
+from .const import ATTR_JOB_ID, ATTR_PROVIDER
 
 
 class BackupMonitorEntity(CoordinatorEntity):
