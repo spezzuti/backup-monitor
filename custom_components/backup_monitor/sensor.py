@@ -180,7 +180,7 @@ class ProviderLastResultSensor(BackupMonitorEntity, SensorEntity):
     @property
     def native_value(self):
         jobs = _jobs_for_provider(self.coordinator.data, self._provider)
-        return _provider_result(jobs)
+        return _provider_result(jobs, self._provider)
 
 
 def _get_state(data: dict[str, Any] | None, provider: str, job_id: str) -> dict[str, Any]:
@@ -224,7 +224,7 @@ def _latest_success_iso(jobs: dict[str, Any]) -> str | None:
     return latest
 
 
-def _provider_result(jobs: dict[str, Any]) -> str:
+def _provider_result(jobs: dict[str, Any], provider: str | None = None) -> str:
     if not jobs:
         return "unknown"
 
@@ -240,4 +240,10 @@ def _provider_result(jobs: dict[str, Any]) -> str:
     ):
         return "unknown"
 
+    if provider == PROVIDER_DUPLICATI:
+        results = [job.get("last_result") if isinstance(job, dict) else None for job in jobs.values()]
+        if any(result not in {"success", "warning"} for result in results):
+            return "unknown"
+        if "warning" in results:
+            return "warning"
     return "success"

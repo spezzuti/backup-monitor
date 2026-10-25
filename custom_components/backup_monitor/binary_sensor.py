@@ -184,6 +184,13 @@ def _provider_is_healthy(
     provider: str,
     stale_hours: int,
 ) -> bool:
+    if provider == PROVIDER_DUPLICATI:
+        jobs = _jobs_for_provider(data, provider)
+        if not jobs or any(
+            not isinstance(job, dict) or job.get("last_result") != "success"
+            for job in jobs.values()
+        ):
+            return False
     completed_jobs = _completed_jobs_for_provider(data, provider)
     if not completed_jobs:
         return False
