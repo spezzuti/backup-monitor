@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 import logging
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import quote
 
+from aiohttp import ClientError
 from homeassistant.core import HomeAssistant
 
 from ..const import CONF_BASE_URL, CONF_PASSWORD, CONF_VERIFY_SSL
@@ -67,9 +70,17 @@ class DuplicatiClient:
 
             last_error = metadata.get("LastErrorMessage")
             last_error_date = metadata.get("LastErrorDate")
-            last_result = "success"
-            if last_error or last_error_date:
-                last_result = "error"
+            # Metadata retains historical errors and completion is not success.
+            try:
+                log_data = await json_get(
+                    self._session,
+                    f"{self.base_url}/api/v1/backup/{quote(jid, safe='')}/log?pagesize=100",
+                    headers=self._auth_headers(),
+                )
+            except (ClientError, TimeoutError, ValueError):
+                # Do not log potentially sensitive provider response bodies.
+                log_data = None
+            last_result = _last_backup_result(log_data, metadata)
 
             jobs[jid] = {
                 "job_id": jid,
@@ -203,3 +214,84 @@ def _parse_duration_seconds(v: Any) -> float | None:
         except Exception:
             return None
     return None
+
+
+def _last_backup_result(log_data: Any, metadata: dict[str, Any]) -> str:
+    """Conservatively classify the newest backup result in one bounded log page.
+
+    Duplicati logs operation results as Type=Result, with a JSON Message.
+    If the page cannot establish the latest backup result, never imply success.
+    """
+    result = _result_from_log(log_data, metadata)
+    if result != "unknown":
+        return result
+    # A log failure must not erase independently established latest fatal evidence.
+    error_time = _parse_time(metadata.get("LastErrorDate"))
+    finished = _parse_time(metadata.get("LastBackupFinished"))
+    if error_time is not None and error_time.tzinfo is not None:
+        if finished is None or finished.tzinfo is None or error_time >= finished:
+            return "error"
+    return "unknown"
+
+
+def _result_from_log(log_data: Any, metadata: dict[str, Any]) -> str:
+    if not isinstance(log_data, list):
+        return "unknown"
+    records: list[tuple[int, dict[str, Any]]] = []
+    seen_ids: set[int] = set()
+    for record in log_data:
+        if not isinstance(record, dict):
+            return "unknown"
+        raw_id = record.get("ID")
+        if isinstance(raw_id, bool):
+            return "unknown"
+        try:
+            record_id = int(raw_id)
+        except (TypeError, ValueError, OverflowError):
+            return "unknown"
+        if str(record_id) != str(raw_id) or record_id < 0 or record_id in seen_ids:
+            return "unknown"
+        seen_ids.add(record_id)
+        records.append((record_id, record))
+
+    for _, record in sorted(records, key=lambda item: item[0], reverse=True):
+        if record.get("Type") != "Result":
+            continue
+        try:
+            result = json.loads(record.get("Message", ""))
+        except (TypeError, ValueError):
+            return "unknown"
+        if not isinstance(result, dict) or not isinstance(result.get("MainOperation"), str):
+            return "unknown"
+        if result["MainOperation"] != "Backup":
+            continue
+        end = _parse_time(result.get("EndTime"))
+        finished = _parse_time(metadata.get("LastBackupFinished"))
+        if end is None or end.tzinfo is None:
+            return "unknown"
+        # Metadata newer than the latest log means the returned page is stale.
+        if finished is not None and finished.tzinfo is not None and end < finished:
+            return "unknown"
+        status = result.get("ParsedResult")
+        if isinstance(status, str) and status in {"Error", "Fatal"}:
+            return "error"
+        if finished is None or finished.tzinfo is None:
+            return "unknown"
+        error_date = metadata.get("LastErrorDate")
+        error_time = _parse_time(error_date)
+        if error_date or metadata.get("LastErrorMessage"):
+            if error_time is None or error_time.tzinfo is None or error_time >= end:
+                return "error"
+        status = result.get("ParsedResult")
+        if not isinstance(status, str):
+            return "unknown"
+        if status in {"Error", "Fatal"}:
+            return "error"
+        if result.get("Interrupted") is not False or result.get("Dryrun") is not False:
+            return "unknown"
+        if status == "Warning":
+            return "warning"
+        if status == "Success":
+            return "success"
+        return "unknown"
+    return "unknown"

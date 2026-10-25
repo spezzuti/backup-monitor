@@ -1,0 +1,512 @@
+[
+  {
+    "name": "old_fatal_then_success",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "success",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "old_fatal_then_nonfatal_errors",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Error\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "latest_fatal_log",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Fatal\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "warning_not_healthy",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Warning\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "warning",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "newer_metadata_fatal",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-10-23T19:43:05Z",
+      "LastErrorMessage": "synthetic new failure"
+    }
+  },
+  {
+    "name": "equal_metadata_error",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-10-22T01:06:38Z"
+    }
+  },
+  {
+    "name": "no_logs",
+    "logs": [],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "malformed_response",
+    "logs": "not a list",
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "malformed_result",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "unknown_status",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Future\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "invalid_status_type",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": [], \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "missing_result_kind",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "unsorted_new_error",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      },
+      {
+        "ID": 20,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Error\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "unsorted_new_success",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Error\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      },
+      {
+        "ID": 20,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "success",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "latest_compaction_skipped",
+    "logs": [
+      {
+        "ID": 20,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Compact\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      },
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Error\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "no_backup_in_page",
+    "logs": [
+      {
+        "ID": 20,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Compact\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "duplicate_ids",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      },
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Error\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "invalid_id",
+    "logs": [
+      {
+        "ID": "bad",
+        "Type": "Result",
+        "Message": "{}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "stale_log_page",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-21T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "missing_finish",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastErrorDate": "2026-04-05T19:43:05Z"
+    }
+  },
+  {
+    "name": "no_error_metadata",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "success",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z"
+    }
+  },
+  {
+    "name": "bad_error_date",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "bad"
+    }
+  },
+  {
+    "name": "interrupted",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": true, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "dry_run",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": true}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "naive_log_time",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "offset_time",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T03:06:38+02:00\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "success",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "network_timeout",
+    "logs": null,
+    "network_timeout": true,
+    "expected": "unknown",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    }
+  },
+  {
+    "name": "first_backup_fatal_no_completed_metadata",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Fatal\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": true, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {}
+  },
+  {
+    "name": "error_log_without_finished_metadata",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Error\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "error",
+    "metadata": {}
+  },
+  {
+    "name": "log_unavailable_with_known_latest_fatal",
+    "logs": null,
+    "network_timeout": true,
+    "expected": "error",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-10-23T19:43:05Z",
+      "LastErrorMessage": "synthetic current fatal"
+    }
+  },
+  {
+    "name": "escaped_job_id",
+    "logs": [
+      {
+        "ID": 10,
+        "Type": "Result",
+        "Message": "{\"MainOperation\": \"Backup\", \"ParsedResult\": \"Success\", \"EndTime\": \"2026-10-22T01:06:38Z\", \"Interrupted\": false, \"Dryrun\": false}"
+      }
+    ],
+    "network_timeout": false,
+    "expected": "success",
+    "metadata": {
+      "LastBackupFinished": "2026-10-22T01:06:38Z",
+      "LastErrorDate": "2026-04-05T19:43:05Z",
+      "LastErrorMessage": "synthetic old failure"
+    },
+    "job_id": "synthetic/with space"
+  }
+]
